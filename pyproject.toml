@@ -1,0 +1,65 @@
+[project]
+name = "openlibrary-tag-analyzer"
+version = "0.1.0"
+description = "Exploring tags"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipython>=8.18.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ty>=0.0.1a25",
+    "ray==2.51.1",
+    "ray[serve]==2.51.1",
+    "orjson==3.11.4",
+    "requests",
+    "numpy==2.3.4",
+    "scikit-learn==1.7.2",
+]
+
+# [tool.uv]
+# Fast dependency management — works like poetry but leaner
+# package = true
+
+# [tool.pytest.ini_options]
+# Pytest configuration
+# addopts = "-v --maxfail=1 --disable-warnings"
+# testpaths = ["."]
+# python_files = ["*test.py"]
+
+[tool.ruff]
+# Ruff is both a linter and formatter (replaces black, flake8, isort, etc.)
+line-length = 120
+indent-width = 4
+target-version = "py312"
+
+# Enable common linting rules
+# lint.select = [
+  # "E",   # pycodestyle errors
+  # "F",   # pyflakes
+  # "I",   # import sorting
+  # "B",   # bugbear
+  # "UP",  # pyupgrade
+  # "SIM", # simplify
+  # "RUF"  # ruff-specific rules
+# ]
+
+# Optional: ignore overly strict or style-preference rules
+# lint.ignore = [
+  # "E501", # line too long (handled by formatter)
+# ]
+
+# Allow autofixes with `ruff check --fix`
+# fix = true
+
+# [tool.ruff.format]
+# # Enable experimental ruff formatter
+# quote-style = "double"
+# indent-style = "space"
+# line-ending = "auto"
+# skip-magic-trailing-comma = false
+# preview = true
+
+# [build-system]
+# requires = ["hatchling"]
+# build-backend = "hatchling.build"
