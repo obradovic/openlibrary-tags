@@ -1,8 +1,34 @@
 NOTES:
+    First pass:
+        Make them all lowercase
+
+    People:
+        "Jiazhou Zhou (b. 1582)"    # the "b." prefix?
+        "Henry Mercer (d. 1863)"    # the "d." prefix?
+        "Denis Bowen (1921-)"       # tag would somehow need to be updated when he dies?
+
+        Some people have dates, others dont.  Remove dates from people and have dates be in the subject_times tag?
+            "Jesus Christ"
+            "Eliel Saarinen"
+
+        Different names for the same people, how to disambiguate?
+            "Vladimir Ilʹich Lenin (1870-1924)"     # duplicative of "Lenin"?
+            "Leslie H. Butcher"                     # vs just "Leslie Butcher"?
+
+        Incorrect birth or death dates?
+
+        Initials instead of names?
+            "G. Baumgartner (1924-)"
+
+        Names that are not names?
+            "House of Habsburg"
+            "Paris family"
+
+
     Use consistent naming:
         all lowercase
         all singular no plural
-        all english (?? and translate in realtime as needed ??)
+        all english (?? and translate to other languages as needed ??  in realtime??)
 
     Keep track of both "as-entered tags" and "sanitized tags"
         Prefer sanitized tags when searching
@@ -39,7 +65,7 @@ NOTES:
             "chinese dramatists" could reasonably be either "dramatists:chinese" or "chinese:dramatists"
             In this case, split into two tags, "chinese" and "dramatists"
 
-    If there will only ever be one book with this tag, it should not be a tag
+    If there will only ever be one book with this tag, it should not be a tag?
         ie dont tag "isbn:234234234"
 
     Define synonyms in Solr:
@@ -55,7 +81,7 @@ NOTES:
         /tag chinese
             will give you a book to tag that has an existing tag with the "chinese"
 
-    Accept free-form input for tags, but then validate it and present it for approval to the librarian
+    Accept free-form input for tags, but then validate it and present it for approval to the librarian?
 
     Keep track of who has sanitized tags
     Keep track of deleted / modified tags?  So we can keep a "tagging history", revert back to previous tags, track tag migration over time?
@@ -65,6 +91,10 @@ TAXONOMY:
     language:
     language-original:
     translated-from:
+
+    person:         -> maps from subject_people
+    place:          -> maps from subject_places
+    time:           -> maps from subject_times
 
     award:              Hugo:Fiction:Fiction:1980 or New York Times
     series:             "harry potter" or "standalone"

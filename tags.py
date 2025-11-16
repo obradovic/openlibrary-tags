@@ -109,9 +109,13 @@ def analyze_tags(works: list[Work]):
     all_tags = []
     for work in works:
         all_tags.extend(work.subjects)
+        all_tags.extend(work.subject_people)
         all_tags.extend(work.subject_places)
         all_tags.extend(work.subject_times)
-        all_tags.extend(work.subject_people)
+
+    subject_people = [x.subject_people for x in works if x.subject_people]
+    subject_places = [x.subject_places for x in works if x.subject_places]
+    subject_times = [x.subject_times for x in works if x.subject_times]
 
     # Normalize and count
     normalized_tags = [normalize_tag(tag) for tag in all_tags]
@@ -142,7 +146,7 @@ def normalize_tag(tag: str) -> str:
     """
     Normalize Unicode and lowercase
     NFKD stands for “Normalization Form Compatibility Decomposition.”
-    It is one of the Unicode normalization forms defined to ensure that text strings are represented in a consistent way for comparison and processing.
+    It is one of the Unicode normalization forms, makes text strings represented in a consistent way
     """
     return unicodedata.normalize("NFKD", tag).lower().strip()
 
