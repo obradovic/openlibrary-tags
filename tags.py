@@ -8,19 +8,24 @@ USAGE:
     # Examine the default file - works.txt
     > tags
 
-    # Download the latest tag data, and examine it
+    # Use a filename other than the default "works.txt"
+    > tags --filename something-else.txt
+
+    # Downloads the latest tag data, saves the file into the current directory as "works.txt", and examines it
     > tags --download
 
-    # Examine the first 1,000,000 lines of the file only (useful for testing)
+    # Examines the first 1,000,000 lines of the file only (useful for quick testing)
     > tags --limit 1000000
 
 """
 
+import argparse
 from collections import Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 import gzip
 import shutil
+import sys
 import time
 from typing import Optional
 import unicodedata
@@ -32,10 +37,10 @@ import requests
 #
 # GLOBALS
 #
-DEFAULT_LINE_LIMIT = 1_000_000
+DEFAULT_LINE_LIMIT = 0
 DEFAULT_FILENAME = "works.txt"
 DEFAULT_WORKS_URL = "https://openlibrary.org/data/ol_dump_works_latest.txt.gz"
-MS_PER_SEC = 1000
+# MS_PER_SEC = 1000
 
 
 #
@@ -43,16 +48,20 @@ MS_PER_SEC = 1000
 #
 @contextmanager
 def Timer(name: str):
-    start = time.time()
+    start_time = time.time()
+    time.sleep(1.5)
+    end_time = time.time()
 
     try:
         print(f"{name} ...")
         yield
 
     finally:
-        end = time.time()
-        diff = round((end - start) * MS_PER_SEC)
-        print(f"{name} took {diff:,} ms")
+        end_time = time.time()
+        diff_seconds = end_time - start_time
+        print(f"{name} took {diff_seconds:.1f}s")
+        # diff_ms = round(diff_seconds * MS_PER_SEC)
+        # print(f"{name} took {diff_ms:,} ms")
 
 
 @dataclass
@@ -100,8 +109,13 @@ def main():
     """
     This is main
     """
-    # works = download_and_parse()
-    works = parse_works_file(DEFAULT_FILENAME)
+    args = get_args()
+
+    if args.download:
+        works = download_and_parse()
+    else:
+        works = parse_works_file(file_path=args.filename, line_limit=args.limit)
+
     analyze_tags(works)
 
 
@@ -251,6 +265,25 @@ def parse_line(line: str) -> Optional[Work]:
     except Exception:
         print(f"Error parsing line: {line}")
         return None
+
+
+def get_args(the_args: Optional[list[str]] = None) -> argparse.Namespace:
+    """
+    Returns the users's args
+    """
+    if not the_args:
+        the_args = sys.argv[1:]
+
+    arg_parser = argparse.ArgumentParser()
+
+    arg_parser.add_argument("--download", action="store_true", default=False, help="Download a new file")
+    arg_parser.add_argument("--filename", type=str, default=DEFAULT_FILENAME, help="Filename to parse")
+    arg_parser.add_argument(
+        "--limit", type=int, default=DEFAULT_LINE_LIMIT, help="Number of lines to parse from the file"
+    )
+
+    args, _ = arg_parser.parse_known_args(the_args)
+    return args
 
 
 if __name__ == "__main__":
