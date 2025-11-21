@@ -1,6 +1,5 @@
 
-QUICK START:
-
+## QUICK START:
 
 ```
 # To initialize
@@ -15,6 +14,6 @@ tags --download
 ```
 
 ```
-# To run the analysis on the latest file
+# To run the analysis on said latest file
 tags
 ```
