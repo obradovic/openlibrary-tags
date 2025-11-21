@@ -77,18 +77,18 @@ def Timer(name: str):
 class Work:
     type: str
     id: str
-    # revision: int
     last_modified: str
 
-    # title: Optional[str] = None
-    # subtitle: Optional[str] = None
-
-    # authors: list[AuthorRole] = field(default_factory=list)
-    # translated_titles: list[str] = field(default_factory=list)
     subjects: list[str] = field(default_factory=list)
     subject_places: list[str] = field(default_factory=list)
     subject_times: list[str] = field(default_factory=list)
     subject_people: list[str] = field(default_factory=list)
+
+    # revision: int
+    # title: Optional[str] = None
+    # subtitle: Optional[str] = None
+    # authors: list[AuthorRole] = field(default_factory=list)
+    # translated_titles: list[str] = field(default_factory=list)
     # description: Optional[str] = None
     # dewey_number: list[str] = field(default_factory=list)
     # lc_classifications: list[str] = field(default_factory=list)
@@ -170,6 +170,86 @@ def normalize_tag(tag: str) -> str:
     return unicodedata.normalize("NFKD", tag).lower().strip()
 
 
+def parse_works_file(file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT) -> list[Work]:
+    """
+    Parses the file into a list of Work dataclasses
+    """
+    ret = []
+
+    with Timer(f"Parsing {file_path}"):
+        with open(file_path, "r", encoding="utf-8") as file:
+            for i, line in enumerate(file):
+                if line_limit and i >= line_limit:
+                    break
+
+                if debug():
+                    if i % DEBUG_OUTPUT_QUANTA == 0:
+                        print(f"loaded {i:,} items")
+
+                work = parse_works_line(line)
+                ret.append(work)
+
+    return ret
+
+
+def parse_works_line(line: str) -> Optional[Work]:
+    """
+    Parses a single line of the file into a single Work dataclass
+    """
+    line = line.strip()
+    if not line:
+        return None
+
+    parts = line.split("\t")
+    if len(parts) < 5:
+        return None
+
+    work_type = parts[0]
+    work_id = parts[1]
+    revision = int(parts[2])
+    last_modified = parts[3]
+
+    try:
+        # Decode the JSON
+        parsed = orjson.loads(parts[4])
+
+        # Map JSON fields to dataclass
+        ret = Work(
+            type=work_type,
+            id=work_id,
+            last_modified=last_modified,
+            subjects=parsed.get("subjects", []),
+            subject_places=parsed.get("subject_places", []),
+            subject_times=parsed.get("subject_times", []),
+            subject_people=parsed.get("subject_people", []),
+
+            # revision=revision,
+            # title=parsed.get("title"),
+            # subtitle=parsed.get("subtitle"),
+            # authors=parsed.get("authors", []),
+            # translated_titles=parsed.get("translated_titles", []),
+            # description=parsed.get("description"),
+            # dewey_number=parsed.get("dewey_number", []),
+            # lc_classifications=parsed.get("lc_classifications", []),
+            # first_sentence=parsed.get("first_sentence"),
+            # original_languages=parsed.get("original_languages", []),
+            # other_titles=parsed.get("other_titles", []),
+            # first_publish_date=parsed.get("first_publish_date"),
+            # links=parsed.get("links", []),
+            # notes=parsed.get("notes"),
+            # cover_edition=parsed.get("cover_edition"),
+            # covers=parsed.get("covers", []),
+            # latest_revision=parsed.get("latest_revision"),
+            # created=parsed.get("created"),
+            # key=parsed.get("key"),
+        )
+        return ret
+
+    except Exception:
+        print(f"Error parsing line: {line}")
+        return None
+
+
 def download(
     url: str = DEFAULT_WORKS_URL, file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT
 ) -> bool:
@@ -200,85 +280,6 @@ def download(
         return False
 
     return True
-
-
-def parse_works_file(file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT) -> list[Work]:
-    """
-    Parses the file into a list of Work dataclasses
-    """
-    ret = []
-
-    with Timer(f"Parsing {file_path}"):
-        with open(file_path, "r", encoding="utf-8") as file:
-            for i, line in enumerate(file):
-                if line_limit and i >= line_limit:
-                    break
-
-                if debug():
-                    if i % DEBUG_OUTPUT_QUANTA == 0:
-                        print(f"loaded {i:,} items")
-
-                work = parse_line(line)
-                ret.append(work)
-
-    return ret
-
-
-def parse_line(line: str) -> Optional[Work]:
-    """
-    Parses a single line of the file into a single Work dataclass
-    """
-    line = line.strip()
-    if not line:
-        return None
-
-    parts = line.split("\t")
-    if len(parts) < 5:
-        return None
-
-    work_type = parts[0]
-    work_id = parts[1]
-    revision = int(parts[2])
-    last_modified = parts[3]
-
-    try:
-        # Decode the JSON
-        parsed = orjson.loads(parts[4])
-
-        # Map JSON fields to dataclass
-        ret = Work(
-            type=work_type,
-            id=work_id,
-            # revision=revision,
-            last_modified=last_modified,
-            # title=parsed.get("title"),
-            # subtitle=parsed.get("subtitle"),
-            # authors=parsed.get("authors", []),
-            # translated_titles=parsed.get("translated_titles", []),
-            subjects=parsed.get("subjects", []),
-            subject_places=parsed.get("subject_places", []),
-            subject_times=parsed.get("subject_times", []),
-            subject_people=parsed.get("subject_people", []),
-            # description=parsed.get("description"),
-            # dewey_number=parsed.get("dewey_number", []),
-            # lc_classifications=parsed.get("lc_classifications", []),
-            # first_sentence=parsed.get("first_sentence"),
-            # original_languages=parsed.get("original_languages", []),
-            # other_titles=parsed.get("other_titles", []),
-            # first_publish_date=parsed.get("first_publish_date"),
-            # links=parsed.get("links", []),
-            # notes=parsed.get("notes"),
-            # cover_edition=parsed.get("cover_edition"),
-            # covers=parsed.get("covers", []),
-            # latest_revision=parsed.get("latest_revision"),
-            # created=parsed.get("created"),
-            # key=parsed.get("key"),
-        )
-        return ret
-
-    except Exception:
-        print(f"Error parsing line: {line}")
-        return None
 
 
 def set_debug(x: bool) -> None:
