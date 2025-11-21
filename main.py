@@ -3,7 +3,7 @@ Examines OpenLibrary tags
 
 USAGE:
     # First, create a handy bash alias
-    > alias tags='just run-tags --'
+    > alias tags='just run'
 
     # Examine the default file - works.txt
     > tags
