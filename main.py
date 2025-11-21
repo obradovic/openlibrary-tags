@@ -38,11 +38,10 @@ import requests
 # GLOBALS
 #
 DEBUG = False
-DEBUG_QUANTA = 10_000
+DEBUG_OUTPUT_QUANTA = 10_000
 DEFAULT_LINE_LIMIT = 0
 DEFAULT_FILENAME = "works.txt"
 DEFAULT_WORKS_URL = "https://openlibrary.org/data/ol_dump_works_latest.txt.gz"
-# MS_PER_SEC = 1000
 
 
 #
@@ -62,6 +61,8 @@ def Timer(name: str):
         end_time = time.time()
         diff_seconds = end_time - start_time
         print(f"{name} took {diff_seconds:.1f}s")
+
+        # MS_PER_SEC = 1000
         # diff_ms = round(diff_seconds * MS_PER_SEC)
         # print(f"{name} took {diff_ms:,} ms")
 
@@ -112,15 +113,14 @@ def main():
     This is main
     """
     args = get_args()
-
-    global DEBUG
-    DEBUG = args.debug
+    set_debug(args.debug)
 
     if args.download:
-        works = download_and_parse(output_path=args.filename, line_limit=args.limit)
-    else:
-        works = parse_works_file(file_path=args.filename, line_limit=args.limit)
+        ok = download(file_path=args.filename, line_limit=args.limit)
+        if not ok:
+            return
 
+    works = parse_works_file(file_path=args.filename, line_limit=args.limit)
     analyze_tags(works)
 
 
@@ -170,31 +170,36 @@ def normalize_tag(tag: str) -> str:
     return unicodedata.normalize("NFKD", tag).lower().strip()
 
 
-def download_and_parse(
-    url: str = DEFAULT_WORKS_URL, output_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT
-) -> list[Work]:
+def download(
+    url: str = DEFAULT_WORKS_URL, file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT
+) -> bool:
     """
-    Downloads the OpenLibrary works dump, decompresses it, and parses into Work dataclasses.
+    Downloads the OpenLibrary works dump and decompresses it. If error, returns False
     """
-    with Timer("Downloading"):
-        # Download the gzipped file
-        response = requests.get(url, stream=True)
-        if response.status_code != 200:
-            raise Exception(f"Failed to download file: {response.status_code}")
+    try:
+        with Timer("Downloading"):
+            # Download the gzipped file
+            response = requests.get(url, stream=True)
+            if response.status_code != 200:
+                raise Exception(f"Failed to download file: {response.status_code}")
 
-        # Save the gzipped file locally
-        gz_path = output_path + ".gz"
-        with open(gz_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+            # Save the gzipped file locally
+            gz_path = file_path + ".gz"
+            with open(gz_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
 
-    # Decompress the gzipped file to the output path
-    with Timer("Decompressing"):
-        with gzip.open(gz_path, "rb") as f_in:
-            with open(output_path, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        # Decompress the gzipped file to the output path
+        with Timer("Decompressing"):
+            with gzip.open(gz_path, "rb") as f_in:
+                with open(file_path, "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
 
-    return parse_works_file(output_path, line_limit=line_limit)
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return False
+
+    return True
 
 
 def parse_works_file(file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAULT_LINE_LIMIT) -> list[Work]:
@@ -209,8 +214,8 @@ def parse_works_file(file_path: str = DEFAULT_FILENAME, line_limit: int = DEFAUL
                 if line_limit and i >= line_limit:
                     break
 
-                if DEBUG:
-                    if i % DEBUG_QUANTA == 0:
+                if debug():
+                    if i % DEBUG_OUTPUT_QUANTA == 0:
                         print(f"loaded {i:,} items")
 
                 work = parse_line(line)
@@ -274,6 +279,15 @@ def parse_line(line: str) -> Optional[Work]:
     except Exception:
         print(f"Error parsing line: {line}")
         return None
+
+
+def set_debug(x: bool) -> None:
+    global DEBUG
+    DEBUG = x
+
+
+def debug() -> bool:
+    return DEBUG
 
 
 def get_args(the_args: Optional[list[str]] = None) -> argparse.Namespace:
