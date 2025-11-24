@@ -184,7 +184,7 @@ def analyze_tags(works: Works):
     display_histogram(tags_to_size)
 
     # inspect the languages
-    tags_to_languages = analyze_languages(tags_by_alphabetical)
+    tags_to_languages, languages_to_tags = analyze_languages(tags_by_alphabetical)
 
     """
     # Normalize and count
@@ -275,21 +275,31 @@ def display_histogram(tags_to_size: dict[str, int], width: int = 50) -> None:
         print(f"{label:>8} | {bar} ({count:,})")
 
 
-def analyze_languages(tags: Strings) -> list:
-    ret = []
+def analyze_languages(tags: Strings) -> tuple[dict[str, Language], dict[Language, Strings]]:
+    """
+    Returns two dicts,
+    """
+    tags_to_languages = {}
+    languages_to_tags = defaultdict(list)
 
     for tag in enumerate_progress(tags, "tags"):
         if tag:
             language = analyze_language(tag)
-            ret.append(language)
 
-    return ret
+            tags_to_languages[tag] = language
+            languages_to_tags[language].append(tag)
+
+    return tags_to_languages, languages_to_tags
 
 
 def analyze_language(string: str) -> Language | None:
     """
     Figures out what language this is in
     """
+    if not LANGUAGE_DETECTOR:
+        print("ERROR: Please initialize language detector")
+        return None
+
     language = LANGUAGE_DETECTOR.detect_language_of(string)
     return language
 
@@ -299,9 +309,6 @@ def initialize_language_detector() -> None:
     Initializes the language detector
     """
     global LANGUAGE_DETECTOR
-    if not LANGUAGE_DETECTOR:
-        print("ERROR: Please initialize language detector")
-        return
 
     with Timer("Building language detector"):
         # Uses ALL languages
