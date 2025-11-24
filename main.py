@@ -20,7 +20,7 @@ USAGE:
 """
 
 import argparse
-from collections import Counter, defaultdict
+from collections import defaultdict  # , Counter
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -32,8 +32,9 @@ from typing import Iterable, Iterator, TypeVar
 import unicodedata
 
 import ciso8601
-from lingua import Language, LanguageDetectorBuilder
-import matplotlib.pyplot as plt
+from lingua import Language, LanguageDetector, LanguageDetectorBuilder
+
+# import matplotlib.pyplot as plt
 import orjson
 import requests
 
@@ -46,7 +47,7 @@ DEBUG_OUTPUT_QUANTA = 250_000
 DEFAULT_LINE_LIMIT = 0
 DEFAULT_FILENAME = "works.txt"
 DEFAULT_WORKS_URL = "https://openlibrary.org/data/ol_dump_works_latest.txt.gz"
-LANGUAGE_DETECTOR = None
+LANGUAGE_DETECTOR: LanguageDetector | None = None
 
 
 #
@@ -154,7 +155,7 @@ def analyze_tags(works: Works):
     tags_to_size = {x: len(tags_to_works[x]) for x in tags_by_size}
 
     # sort by keys in alphabetical order
-    tags_by_alphabetical = sorted(tags_to_works.items(), key=lambda item: item[0])
+    tags_by_alphabetical = sorted(tags_by_size)
 
     # get a list of the tags
     tags_general = [x.subjects for x in works if x.subjects]
@@ -250,7 +251,7 @@ def display_histogram(tags_to_size: dict[str, int], width: int = 50) -> None:
         (70, 79),
         (80, 89),
         (90, 99),
-        (101, float("inf"))
+        (101, float("inf")),
     ]
 
     # Count how many tags fall into each bin
@@ -278,19 +279,29 @@ def analyze_languages(tags: Strings) -> list:
     ret = []
 
     for tag in enumerate_progress(tags, "tags"):
-        language = analyze_language(tag)
-        ret.append(language)
+        if tag:
+            language = analyze_language(tag)
+            ret.append(language)
 
     return ret
 
 
 def analyze_language(string: str) -> Language | None:
+    """
+    Figures out what language this is in
+    """
     language = LANGUAGE_DETECTOR.detect_language_of(string)
     return language
 
 
 def initialize_language_detector() -> None:
+    """
+    Initializes the language detector
+    """
     global LANGUAGE_DETECTOR
+    if not LANGUAGE_DETECTOR:
+        print("ERROR: Please initialize language detector")
+        return
 
     with Timer("Building language detector"):
         # Uses ALL languages
@@ -509,7 +520,7 @@ def get_tags_for_work(work: Work) -> Strings:
     return ret
 
 
-def enumerate_progress(iterable: Iterable[T], label: str="items", quanta: int = DEBUG_OUTPUT_QUANTA) -> Iterator[T]:
+def enumerate_progress(iterable: Iterable[T], label: str = "items", quanta: int = DEBUG_OUTPUT_QUANTA) -> Iterator[T]:
     """
     Wraps an iterable and yields each element while printing progress every `quanta` iterations.
     """
