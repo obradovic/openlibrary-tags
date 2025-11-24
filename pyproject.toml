@@ -11,7 +11,9 @@ dependencies = [
     "ty>=0.0.1a25",
     "ray==2.51.1",
     "ray[serve]==2.51.1",
+    "ciso8601==2.3.3",  # for fast ISO date parsing
     "lingua-language-detector==2.1.1",
+    "matplotlib==3.10.7",
     "orjson==3.11.4",
     "requests",
     "numpy==2.3.4",
