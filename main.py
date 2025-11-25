@@ -247,33 +247,30 @@ def analyze_tags(works: Works):
         tags_to_tag_count = {x: len(tags_to_works[x]) for x in tags_by_tag_count}
     display_histogram(tags_to_tag_count.values(), BINS_TAGS_TO_COUNTS, title="Number of works that have this many tags")
 
-    # maps the "number of tags" to a list of works
-    # tag_counts_to_works = get_tag_counts_to_works(works)
-    # tag_counts_to_work_counts = {x: len(y) for x, y in tag_counts_to_works.items()}
-
     # ###########################################
     #
     # QUESTION: HOW MANY TAGS OF WHAT TYPE ARE THERE
     #
     # ###########################################
-    tags_general = [x.subjects for x in works if x.subjects]
-    tags_people = [x.subject_people for x in works if x.subject_people]
-    tags_places = [x.subject_places for x in works if x.subject_places]
-    tags_times = [x.subject_times for x in works if x.subject_times]
+    with Timer("Analyzing tag categories"):
+        tags_general = [x.subjects for x in works if x.subjects]
+        tags_people = [x.subject_people for x in works if x.subject_people]
+        tags_places = [x.subject_places for x in works if x.subject_places]
+        tags_times = [x.subject_times for x in works if x.subject_times]
 
-    # flatten the list-of-lists-of-strings into lists-of-strings
-    flattened_general = [x for y in tags_general for x in y if x]
-    flattened_people = [x for y in tags_people for x in y if x]
-    flattened_places = [x for y in tags_places for x in y if x]
-    flattened_times = [x for y in tags_times for x in y if x]
-    flattened_all = flattened_general + flattened_people + flattened_places + flattened_times
+        # flatten the list-of-lists-of-strings into lists-of-strings
+        flattened_general = [x for y in tags_general for x in y if x]
+        flattened_people = [x for y in tags_people for x in y if x]
+        flattened_places = [x for y in tags_places for x in y if x]
+        flattened_times = [x for y in tags_times for x in y if x]
+        flattened_all = flattened_general + flattened_people + flattened_places + flattened_times
 
-    # get counts
-    count_general = len(flattened_general)
-    count_people = len(flattened_people)
-    count_places = len(flattened_places)
-    count_times = len(flattened_times)
-    count_all = len(flattened_all)
+        # get counts
+        count_general = len(flattened_general)
+        count_people = len(flattened_people)
+        count_places = len(flattened_places)
+        count_times = len(flattened_times)
+        count_all = len(flattened_all)
     print(f"General: {count_general:<12,} / {count_all:<14,} is {count_general / count_all:.1%}")
     print(f"People:  {count_people:<12,} / {count_all:<14,} is {count_people / count_all:.1%}")
     print(f"Places:  {count_places:<12,} / {count_all:<14,} is {count_places / count_all:.1%}")
@@ -284,10 +281,13 @@ def analyze_tags(works: Works):
     # QUESTION: WHAT LANGUAGES ARE TAGS WRITTEN IN?
     #
     # ###########################################
-    tags_to_languages, languages_to_tags = analyze_languages(tags)
-    languages_to_counts = {x: len(y) for x, y in languages_to_tags.items()}
-    languages_to_counts_sorted = dict(sorted(languages_to_counts.items(), key=lambda x: x[1], reverse=True))
-    print(languages_to_counts_sorted)
+    with Timer("Analyzing tag languages"):
+        tags_to_languages, languages_to_tags = analyze_languages(tags)
+        languages_to_counts = {x: len(y) for x, y in languages_to_tags.items()}
+        languages_to_counts_sorted = dict(sorted(languages_to_counts.items(), key=lambda x: x[1], reverse=True))
+    for language, count in languages_to_counts_sorted.items():
+        language_name = language.name.capitalize() if language else "Unknown"
+        print(f"  {language_name:<14} has {count:,} tags")
 
     """
     # Normalize and count
