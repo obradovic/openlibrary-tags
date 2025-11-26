@@ -237,7 +237,7 @@ def analyze_tags(works: Works):
         works_to_tag_count = {x: get_tag_count_for_work(x) for x in works}
         tag_counts_to_works = dict(Counter(works_to_tag_count.values()))
         tag_counts_to_works = {x: tag_counts_to_works[x] for x in sorted(tag_counts_to_works.keys())}
-    display_tag_count_histogram(tag_counts_to_works, title="Tag count to 'number of works with this many tags':")
+    display_tag_count_histogram(tag_counts_to_works, title="Number of works with this many tags:")
 
     # ###########################################
     #
@@ -248,7 +248,7 @@ def analyze_tags(works: Works):
     with Timer("Analyzing tag counts per tag"):
         tags_by_tag_count = sorted(tags_to_works.keys(), key=lambda tag: len(tags_to_works[tag]), reverse=True)
         tags_to_tag_count = {x: len(tags_to_works[x]) for x in tags_by_tag_count}
-    display_histogram(tags_to_tag_count.values(), BINS_TAGS_TO_COUNTS, title="Number of tags repeated this many times")
+    display_histogram(tags_to_tag_count.values(), BINS_TAGS_TO_COUNTS, title="Number of tags repeated this many times:")
 
     # ###########################################
     #
@@ -299,24 +299,35 @@ def analyze_tags(works: Works):
     # QUESTION: HOW MANY TAGS DIFFER ONLY BY CAPITALIZATION
     #
     # ###########################################
-    """
-    # Normalize and count
-    normalized_tags = [normalize_tag(tag) for tag in all_tags]
-    tag_counter = Counter(normalized_tags)
+    print()
+    with Timer("Analyzing capitalization"):
+        capitalization_variants = get_capitalization_variants(tags)
 
-    # Find tags differing only by capitalization
-    case_variants = {}
-    for tag in all_tags:
-        norm = normalize_tag(tag)
-        if norm not in case_variants:
-            case_variants[norm] = set()
-        case_variants[norm].add(tag)
+        # Sort with "most variants" at the top
+        capitalization_variants = dict(
+            sorted(capitalization_variants.items(), key=lambda item: len(item[1]), reverse=True)
+        )
 
-    for norm, variants in case_variants.items():
-        if len(variants) > 1:
-            print(f"Case variants for '{norm}': {variants}")
+        # All the dupes in a list
+        dupe_tags = [x for y in capitalization_variants.values() for x in y if x]
 
-    """
+        # How many works are affected?
+        works_affected = []
+        for tag in dupe_tags:
+            works = tags_to_works[tag]
+            works_affected.extend(works)
+        works_affected_unique = list(set(works_affected))
+
+    for i, (k, v) in enumerate(capitalization_variants.items()):
+        if i == 10:
+            break
+        for j, variant in enumerate(sorted(v)):
+            print(f"  Capitalization infraction {i}, variant {j}: '{variant}'")
+        print()
+
+    print(f"  {len(capitalization_variants):,} tags have capitalization variations")
+    print(f"  {len(dupe_tags):,} unique tags that differ ONLY by capitalization")
+    print(f"  {len(works_affected_unique):,} works would be affected by sanitizing capitalization")
 
     # ###########################################
     #
@@ -577,6 +588,24 @@ def download(
 #
 # MISCELLANEOUS HELPERS
 #
+def get_capitalization_variants(strings: Strings) -> dict[str, Strings]:
+    """
+    Returns a dict mapping the lowercase string to a list of all its capitalization variants
+    """
+    ret = defaultdict(list)
+
+    for string in strings:
+        key = string.lower()
+
+        if string not in ret[key]:
+            ret[key].append(string)
+
+    # Remove items that only have one variant (no capitalization issues)
+    ret = {x: y for x, y in ret.items() if len(y) > 1}
+
+    return ret
+
+
 def get_tags_to_works(works: Works) -> TagsToWorks:
     """
     Returns a dict that maps tags to a list of each work that has the tag
