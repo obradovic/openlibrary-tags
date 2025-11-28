@@ -5,12 +5,14 @@ description = "Exploring tags"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "ciso8601==2.3.3",      # for fast ISO date parsing
-    "inflect==7.5.0",       # for pluralization
+    "autocorrect==2.6.1",               # for spellchecking corrections
+    "ciso8601==2.3.3",                  # for fast ISO date parsing
+    "inflect==7.5.0",                   # for pluralization
     "lingua-language-detector==2.1.1",  # for language detection
-    "orjson==3.11.4",       # for fast JSON parsing
+    "orjson==3.11.4",                   # for fast JSON parsing
+    "pyspellchecker==0.8.3",            # for spellchecking detection
     "requests",
-    "textblob==0.19.0",
+    "textblob==0.19.0",                 # for spellchecking corrections
     # "numpy==2.3.4",
     # "scikit-learn==1.7.2",
     # "ray==2.51.1",

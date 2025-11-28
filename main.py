@@ -1,6 +1,9 @@
 """
 Examines OpenLibrary tags
 
+SETUP:
+    python -m textblob.download_corpora
+
 USAGE:
     # First, create a handy bash alias
     > alias tags='just run'
@@ -32,11 +35,14 @@ import time
 from typing import Iterable, Iterator, TypeVar
 import unicodedata
 
+# from autocorrect import Speller
 import ciso8601
 import inflect
 from lingua import Language, LanguageDetector, LanguageDetectorBuilder
 import orjson
 import requests
+from spellchecker import SpellChecker
+from textblob import TextBlob
 
 
 #
@@ -59,6 +65,13 @@ DEFAULT_WORKS_URL = "https://openlibrary.org/data/ol_dump_works_latest.txt.gz"
 EMPTY = ""
 ENGLISH_DETECTOR: LanguageDetector | None
 LANGUAGE_DETECTOR: LanguageDetector | None
+
+EMPTY = ""
+LPAREN = "("
+RPAREN = ")"
+
+ANSI_ESCAPE_PATTERN = r"(?:\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~])"
+ANSI_ESCAPE_REGEXP = re.compile(ANSI_ESCAPE_PATTERN)
 
 BINS_TAGS_TO_COUNTS: Bins = [
     (1, 1),
@@ -363,23 +376,91 @@ def analyze_tags(works: Works):
     #
     # ###########################################
     # NOTE: the unimorph_inflect package could possibly help with non-English languages?
-    print()
-    with Timer("Analyzing pluralization (English only)"):
+    with Timer("Analyzing pluralization errors"):
+        print()
         english_tags = languages_to_tags[Language.ENGLISH]
-        singular_to_plurals = get_plural_map(english_tags)
+        english_tags = get_strictly_english(english_tags)
+        with Timer("Analyzing pluralization (English only)"):
+            singular_to_plurals = get_plural_map(english_tags)
 
-    print(f"  {len(singular_to_plurals):,} issues with pluralization:")
-    for i, (singular, plurals) in enumerate(singular_to_plurals.items()):
-        plurals_display = ", ".join(plurals)
-        print(f"  {singular} has {len(plurals)} plurals: {plurals_display}")
+        print(f"  {len(singular_to_plurals):,} issues with pluralization:")
+        for i, (singular, plurals) in enumerate(singular_to_plurals.items()):
+            plurals_display = ", ".join(plurals)
+            print(f"  {singular} has {len(plurals)} plurals: {plurals_display}")
+            if i == 20:
+                break
+
+    # ###########################################
+    #
+    # QUESTION: HOW MANY STRINGS HAVE ANSI ESCAPE CODES?
+    #
+    # ###########################################
+    with Timer("Analyzing ANSI escape codes"):
+        escaped = {x: remove_ansi_escape_codes(x) for x in english_tags}
+        escaped = {x: y for x, y in escaped.items() if x != y}
+        escaped_frequencies = {x: tags_to_tag_count[x] for x in escaped}
+        escaped_frequencies = dict(sorted(escaped_frequencies.items(), key=lambda x: x[1], reverse=True))
+        escaped_count = sum(escaped_frequencies.values())
+
+    print(f"  {len(escaped):,} unique tags have ANSI escape codes")
+    print(f"  {escaped_count:,} total tags have ANSI escape codes")
+    for i, (x, y) in enumerate(escaped_frequencies.items()):
+        print(f"  {x} == {y}")
         if i == 20:
             break
+
+    # ###########################################
+    #
+    # QUESTION: HOW MANY TAGS ARE ENCLOSED IN PARENTHESIS?
+    #
+    # ###########################################
+    with Timer("Analyzing parenthesis"):
+        have_parens = [x for x in tags if LPAREN in x or RPAREN in x]
+        wrapped_parens = [x for x in have_parens if x[0] == LPAREN and x[-1] == RPAREN]
+    print(f"  {len(have_parens):,} tags have parenthesis")
+    print(f"  {len(wrapped_parens):,} tags are wrapped in parenthesis")
 
     # ###########################################
     #
     # QUESTION: HOW MANY MISSPELLINGS ARE THERE?
     #
     # ###########################################
+    with Timer("Analyzing misspellings"):
+        tags_to_corrections = get_misspellings(english_tags)
+    print(tags_to_corrections)
+
+
+def get_misspellings(tags: Strings) -> dict[str, str]:
+    """
+    Returns a dict of words to a list of their misspellings
+    """
+    checker = SpellChecker()
+    # autocorrecter = Speller()
+
+    ret = {}
+
+    for tag in tags:
+        blob = TextBlob(tag)
+        words = blob.words
+        word_tags = blob.tags
+
+        # ignore proper nouns.
+        # Proper nouns are typically tagged as NNP (singular proper noun) or NNPS (plural proper noun).
+        words = [x[0] for x in word_tags if x[1] not in ["NNP", "NNPS"]]
+
+        # Get a list of the misspelled words in this tag
+        for word in words:
+            misspelled = checker.unknown(word)
+            if misspelled:
+                ret[misspelled] = word
+
+        """
+        corrected = autocorrecter(tag)
+        if corrected == tag:
+            continue
+        """
+
+    return ret
 
 
 #
@@ -634,6 +715,30 @@ def download(
 #
 # MISCELLANEOUS HELPERS
 #
+
+
+def contains_ansi_escape_codes(string: str) -> bool:
+    """
+    Returns True if the string contains an ANSI escape code. False otherwise
+    """
+    new = remove_ansi_escape_codes(string)
+    return new != string
+
+
+def remove_ansi_escape_codes(string: str) -> str:
+    """
+    Removes ANSI escape codes, if they exist
+    """
+    return ANSI_ESCAPE_REGEXP.sub(EMPTY, string)
+
+
+def get_strictly_english(strings: Strings) -> Strings:
+    """
+    Return the tags that are strictly ASCII english
+    """
+    return [x for x in strings if x.isascii()]
+
+
 def get_plural_map(tags: Strings) -> dict[str, Strings]:
     """
     Figures out what the plurals are
