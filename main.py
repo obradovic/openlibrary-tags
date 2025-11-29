@@ -1,24 +1,25 @@
 """
-Examines OpenLibrary tags
+Examines OpenLibrary tags.
+(Optionally) downloads the latest works file, and performs rudimentary analysis
 
 SETUP:
-    python -m textblob.download_corpora
+  python -m textblob.download_corpora
 
 USAGE:
-    # First, create a handy bash alias
-    > alias tags='just run'
+  # First, create a handy bash alias
+  > alias tags='just run'
 
-    # Examine the default file - works.txt
-    > tags
+  # Examine the default file - works.txt
+  > tags
 
-    # Use a filename other than the default "works.txt"
-    > tags --filename something-else.txt
+  # Use a filename other than the default "works.txt"
+  > tags --filename something-else.txt
 
-    # Downloads the latest tag data, saves the file into the current directory as "works.txt", and examines it
-    > tags --download
+  # Downloads the latest tag data, saves the file into the current directory as "works.txt", and examines it
+  > tags --download
 
-    # Examines the first 1,000,000 lines of the file only (useful for quick testing)
-    > tags --limit 1000000
+  # Examines the first 1,000,000 lines of the file only (useful for quick testing)
+  > tags --limit 1000000
 
 """
 
@@ -306,9 +307,11 @@ def analyze_tags(works: Works):
         tags_to_languages, languages_to_tags = analyze_languages(tags)
         languages_to_counts = {x: len(y) for x, y in languages_to_tags.items()}
         languages_to_counts_sorted = dict(sorted(languages_to_counts.items(), key=lambda x: x[1], reverse=True))
-    for language, count in languages_to_counts_sorted.items():
+    for i, (language, count) in enumerate(languages_to_counts_sorted.items()):
         language_name = language.name.capitalize() if language else "Unknown"
         print(f"  {language_name:<14} has {count:,} tags")
+        if i == 20:
+            break
 
     # ###########################################
     #
@@ -570,10 +573,12 @@ def analyze_language(string: str) -> Language | None:
         print("ERROR: Please initialize language detector")
         return None
 
+    """
     # first we try english, most of the tags are english and lingua's a little wierd about this?
     language = ENGLISH_DETECTOR.detect_language_of(string)
     if language == Language.ENGLISH:
         return language
+    """
 
     # if its NOT english, try to infer what it is
     language = LANGUAGE_DETECTOR.detect_language_of(string)
