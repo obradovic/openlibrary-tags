@@ -1,8 +1,35 @@
 NOTES:
+    Question: How often is the same tag string in multiple classifications (general, people, places, times)?
+    Question: What languages are tags written in?
+    Question: What are the most popular tags?
+    Question: Do tag frequencies obey a power law?
+    Question: How many works have zero tags?
+    Question: How many works have only one tag?
+    Is there a good way to increase the number of tags for books that have zero tags? ML?
+    Should we eliminate tags by people/places/times - < 3% of tags are times, < 4% are people, ~13% are places.  80% are "general"
+
     First pass:
         Remove leading/trailing spaces
         Remove leading/trailing parenthesis
         Remove newlines in tags
+
+        Remove ANSI escape codes from tags
+        Fix duplicates that are singular/plural. Move to singular?
+        Fix tags that are dicts, not strings (~25 of them)
+
+    Capitalization issues?
+        POLITICS AND GOVERNMENT
+        POlitics and government
+        Politics And Government
+        Politics And government
+        Politics and Government
+        Politics and government
+        politics and government
+
+    Languages:
+        Sometimes tags are in multiple languages (with leading/trailing whitespace to boot):
+            '\n*ಸವಾಲಾಂ-ಜಾಪಿ\' ವಿಭಾಗ"/ Questions & Answers of 1981'
+            ''\nಕೊಂಕಣಿಯಲ್ಲಿ ಹಾಸ್ಯ ಚಟಾಕಿಗಳ ಸಂಗ್ರಹ  / Comedy '
 
     People:
         "Jiazhou Zhou (b. 1582)"    # the "b." prefix?
@@ -29,6 +56,32 @@ NOTES:
         Questionable dates, probably hard to search for:
             "Thomas Aquinas, Saint (1225?-1274)"
 
+        25 instances of dicts not strings:
+            [{'type': '/type/text', 'value': 'John Bunyan (1628-1688)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Joseph Addison (1672-1719)'},
+             {'type': '/type/text', 'value': 'John Milton (1608-1674)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'John Dryden (1631-1700)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'William Cecil Burghley Baron (1520-1598)'},
+             {'type': '/type/text', 'value': 'Robert Clive Clive Baron (1725-1774)'},
+             {'type': '/type/text', 'value': 'John Hampden (1594-1643)'},
+             {'type': '/type/text', 'value': 'Horace Walpole (1717-1797)'},
+             {'type': '/type/text', 'value': 'William Pitt (1759-1806)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'Joseph Addison (1672-1719)'},
+             {'type': '/type/text', 'value': 'John Bunyan (1628-1688)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Francis Atterbury (1662-1732)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'William Pitt (1759-1806)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1728-1774)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Fanny Burney (1752-1840)'},
+             {'type': '/type/text', 'value': 'Frederick II King of Prussia (1712-1786)'},
+             {'type': '/type/text', 'value': 'William Pitt Earl of Chatham (1708-1778)'}]
 
     Places:
 
@@ -69,6 +122,13 @@ NOTES:
             "281-146 B.C."
             "Greco Roman period, 332 B.C.-640 A.D."
 
+    Can we infer tags from the text? Or from the wikipedia page for a work?
+
+    If tags overlap, can we detect and remove synonyms?
+
+    Eliminate leading/trailing spaces:
+        ' Canada',
+        ' Québec (Province)'
 
     Use consistent naming:
         all lowercase
