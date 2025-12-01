@@ -63,9 +63,7 @@ DEBUG_OUTPUT_QUANTA = 250_000
 DEFAULT_LINE_LIMIT = 0
 DEFAULT_FILENAME = "works.txt"
 DEFAULT_WORKS_URL = "https://openlibrary.org/data/ol_dump_works_latest.txt.gz"
-EMPTY = ""
-ENGLISH_DETECTOR: LanguageDetector | None
-LANGUAGE_DETECTOR: LanguageDetector | None
+PRINT_LIMIT = 20
 
 DASH = "-"
 DOUBLE_DASH = "--"
@@ -76,10 +74,13 @@ LPAREN = "("
 RPAREN = ")"
 SPACE = " "
 
+ENGLISH_DETECTOR: LanguageDetector | None
+LANGUAGE_DETECTOR: LanguageDetector | None
+
 ANSI_ESCAPE_PATTERN = r"(?:\x1B[@-Z\\-_]|[\x80-\x9A\x9C-\x9F]|(?:\x1B\[|\x9B)[0-?]*[ -/]*[@-~])"
 ANSI_ESCAPE_REGEXP = re.compile(ANSI_ESCAPE_PATTERN)
 
-BINS_TAGS_TO_COUNTS: Bins = [
+HISTOGRAM_BINS_TAGS_TO_COUNTS: Bins = [
     (1, 1),
     (2, 2),
     (3, 3),
@@ -114,7 +115,7 @@ BINS_TAGS_TO_COUNTS: Bins = [
     (500, float("inf")),
 ]
 
-BINS_TAG_COUNTS_TO_WORKS: Bins = [
+HISTOGRAM_BINS_TAG_COUNTS_TO_WORKS: Bins = [
     (0, 0),
     (1, 1),
     (2, 2),
@@ -137,12 +138,14 @@ BINS_TAG_COUNTS_TO_WORKS: Bins = [
 # TYPES
 #
 
+# Currently unused, but may be used in the future
 # @dataclass
 # class AuthorRole:
 #    type: dict
 #    author: dict
 
 
+# NOTE: These are all commented out to save memory!
 @dataclass
 class Work:
     # type: str     # This is always "/type/work"
@@ -208,31 +211,39 @@ def main():
     """
     This is main
     """
+    # Initialization
     args = get_args()
     initialize(args)
 
+    # Download a new works file?
     if args.download:
         ok = download(file_path=args.filename, line_limit=args.limit)
         if not ok:
             return
 
+    # Parse the works file
     works = parse_works_file(file_path=args.filename, line_limit=args.limit)
+
+    # Analyze the works file
     analyze_tags(works)
 
 
 def analyze_tags(works: Works):
     """
-    Cursory analysis of tags
+    Rudimentary analysis of tags
     """
-    # Sanity check: sometimes we have tags that are serialized dicts, fix those
-    fix_dicts_in_subjects(works)
+    with Timer("Initializing analysis"):
+        # Sanity check: sometimes we have tags that are serialized dicts, fix those
+        fix_dicts_in_subjects(works)
 
-    # invert into a map of tags-to-works
-    tags_to_works = get_tags_to_works(works)
+        # invert into a map of tags-to-works
+        tags_to_works = get_tags_to_works(works)
 
-    # keep a list of all the tag strings, in alphabetical order
-    tags = sorted(tags_to_works.keys())
-    # tags_lowercase = sorted(list(set([x.lower() for x in tags])))
+        # keep a list of all the tag strings, in alphabetical order
+        tags = sorted(tags_to_works.keys())
+
+        # we dont need this?
+        # tags_lowercase = sorted(list(set([x.lower() for x in tags])))
 
     # ###########################################
     #
@@ -268,11 +279,13 @@ def analyze_tags(works: Works):
     with Timer("Analyzing tag counts per tag"):
         tags_by_tag_count = sorted(tags_to_works.keys(), key=lambda tag: len(tags_to_works[tag]), reverse=True)
         tags_to_tag_count = {x: len(tags_to_works[x]) for x in tags_by_tag_count}
-    display_histogram(tags_to_tag_count.values(), BINS_TAGS_TO_COUNTS, title="Number of tags repeated this many times:")
+    display_histogram(
+        tags_to_tag_count.values(), HISTOGRAM_BINS_TAGS_TO_COUNTS, title="Number of tags repeated this many times:"
+    )
 
     # ###########################################
     #
-    # QUESTION: HOW MANY TAGS OF WHAT TYPE ARE THERE
+    # QUESTION: HOW MANY TAGS OF WHAT TYPE (PEOPLE/PLACES/TIMES) ARE THERE?
     #
     # ###########################################
     print()
@@ -305,8 +318,6 @@ def analyze_tags(works: Works):
     # QUESTION: WHAT LANGUAGES ARE TAGS WRITTEN IN?
     #
     # ###########################################
-
-    # NOTE: It detects English when they're not really? See "Čhulālongkō̜nmahāwitthayālai"
     print()
     with Timer("Analyzing tag languages"):
         tags_to_languages, languages_to_tags = analyze_languages(tags)
@@ -315,7 +326,8 @@ def analyze_tags(works: Works):
     for i, (language, count) in enumerate(languages_to_counts_sorted.items()):
         language_name = language.name.capitalize() if language else "Unknown"
         print(f"  {language_name:<14} has {count:,} tags")
-        if i == 20:
+
+        if i == PRINT_LIMIT:
             break
 
     # ###########################################
@@ -343,11 +355,12 @@ def analyze_tags(works: Works):
         works_affected_unique = list(set(works_affected))
 
     for i, (k, v) in enumerate(capitalization_variants.items()):
-        if i == 10:
-            break
         for j, variant in enumerate(sorted(v)):
             print(f"  Capitalization infraction {i}, variant {j}: '{variant}'")
         print()
+
+        if i == PRINT_LIMIT:
+            break
 
     print(f"  {len(capitalization_variants):,} tags have capitalization variations")
     print(f"  {len(dupe_tags):,} unique tags that differ ONLY by capitalization")
@@ -374,7 +387,7 @@ def analyze_tags(works: Works):
     with Timer("Analyzing pluralization errors"):
         print()
         english_tags = languages_to_tags[Language.ENGLISH]
-        english_tags = get_strictly_english(english_tags)
+        english_tags = get_strictly_ascii(english_tags)
         with Timer("Analyzing pluralization (English only)"):
             singular_to_plurals = get_plural_map(english_tags)
 
@@ -382,7 +395,8 @@ def analyze_tags(works: Works):
         for i, (singular, plurals) in enumerate(singular_to_plurals.items()):
             plurals_display = ", ".join(plurals)
             print(f"  {singular} has {len(plurals)} plurals: {plurals_display}")
-            if i == 20:
+
+            if i == PRINT_LIMIT:
                 break
 
     # ###########################################
@@ -401,7 +415,8 @@ def analyze_tags(works: Works):
     print(f"  {escaped_count:,} total tags have ANSI escape codes")
     for i, (x, y) in enumerate(escaped_frequencies.items()):
         print(f"  {x} == {y}")
-        if i == 20:
+
+        if i == PRINT_LIMIT:
             break
 
     # ###########################################
@@ -422,7 +437,12 @@ def analyze_tags(works: Works):
     # ###########################################
     with Timer("Analyzing misspellings"):
         tags_to_corrections = get_misspellings(english_tags)
-    print(tags_to_corrections)
+
+    for i, (x, y) in enumerate(tags_to_corrections):
+        print(f"  {x} == {y}")
+
+        if i == PRINT_LIMIT:
+            break
 
 
 def get_misspellings(tags: Strings) -> dict[str, str]:
@@ -482,7 +502,7 @@ def display_tag_count_histogram(data: dict[int, int], bins: Bins = [], width: in
         print("No data to display")
         return
 
-    bins = bins or BINS_TAG_COUNTS_TO_WORKS
+    bins = bins or HISTOGRAM_BINS_TAG_COUNTS_TO_WORKS
 
     values = data.keys()
     weights = data.values()
@@ -737,7 +757,7 @@ def remove_ansi_escape_codes(string: str) -> str:
     return ANSI_ESCAPE_REGEXP.sub(EMPTY, string)
 
 
-def get_strictly_english(strings: Strings) -> Strings:
+def get_strictly_ascii(strings: Strings) -> Strings:
     """
     Return the tags that are strictly ASCII english
     """
