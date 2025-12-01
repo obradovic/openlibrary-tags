@@ -58,8 +58,8 @@ NOTES:
             "Oliver Goldsmith (1730?-1774,)"                # Trailing comma in dates
             "Oliver Goldsmith (1794-1861)"                  # Both dates wrong (possible another person)
             "Oliver, 1728-1744. Animated nature Goldsmith"  # Some sort of mixup
-            "She stoops to conquer (Goldsmith, Oliver)"
-            "Vicar of Wakefield (Goldsmith, Oliver)"
+            "She stoops to conquer (Goldsmith, Oliver)"     # Book title in tag, remove
+            "Vicar of Wakefield (Goldsmith, Oliver)"        # Book title in tag, remove
             "Works (Goldsmith, Oliver)"                     # Not sure how much work "Works" is doing
             "oliver goldsmith"                              # all lowercase, no dates
 
@@ -101,6 +101,37 @@ NOTES:
              {'type': '/type/text', 'value': 'William Pitt Earl of Chatham (1708-1778)'}]
 
     Places:
+        Not actually places:
+            '(1822-1895)'   # a date range
+             '$9.95\x1e 0'  # a price?
+
+        Mis-used parenthesis:
+            '(Cape Town) South Africa',
+            '(Congo) (Democratic Republic)'
+
+        Abbreviations:
+             '(Wash)'                   # abbreviated, no period, has parens
+             '(Wash.) Bellingham'       # abbreviated, with period and parens
+             '(Conn.) Norwich'
+
+        These presumably all refer to the same place?
+            'Abitibi'
+            'Abitibi (Quebec : Region)'
+            'Abitibi (Quebec)'
+            'Abitibi (Québec : District)'
+            'Abitibi (Québec : Région)'
+            'Abitibi (Québec)'
+            'Abitibi (Region)'
+            'Abitibi (Région)'
+            'Abitibi Co'
+            'Abitibi Col'
+            'Abitibi County'
+            'Abitibi Greenstone Belt'
+            'Abitibi Greenstone belt'
+            'Abitibi Region'
+            'Abitibi Region (Quebec)'
+            'Abitibi Region (Québec)'
+            'Abitibi region'
 
 
     Times:
