@@ -1,0 +1,210 @@
+NOTES:
+    Question: How often is the same tag string in multiple classifications (general, people, places, times)?
+    Question: What languages are tags written in?
+    Question: What are the most popular tags?
+    Question: Do tag frequencies obey a power law?
+    Question: How many works have zero tags?
+    Question: How many works have only one tag?
+    Is there a good way to increase the number of tags for books that have zero tags? ML?
+    Should we eliminate tags by people/places/times - < 3% of tags are times, < 4% are people, ~13% are places.  80% are "general"
+
+    First pass:
+        Remove leading/trailing spaces
+        Remove leading/trailing parenthesis
+        Remove newlines in tags
+
+        Remove ANSI escape codes from tags
+        Fix duplicates that are singular/plural. Move to singular?
+        Fix tags that are dicts, not strings (~25 of them)
+
+    Capitalization issues?
+        POLITICS AND GOVERNMENT
+        POlitics and government
+        Politics And Government
+        Politics And government
+        Politics and Government
+        Politics and government
+        politics and government
+
+    Languages:
+        Sometimes tags are in multiple languages (with leading/trailing whitespace to boot):
+            '\n*ಸವಾಲಾಂ-ಜಾಪಿ\' ವಿಭಾಗ"/ Questions & Answers of 1981'
+            ''\nಕೊಂಕಣಿಯಲ್ಲಿ ಹಾಸ್ಯ ಚಟಾಕಿಗಳ ಸಂಗ್ರಹ  / Comedy '
+
+    People:
+        "Jiazhou Zhou (b. 1582)"    # the "b." prefix?
+        "Henry Mercer (d. 1863)"    # the "d." prefix?
+        "Denis Bowen (1921-)"       # tag would somehow need to be updated when he dies?
+
+        Some people have dates, others dont.  Remove dates from people and have dates be in the subject_times tag?
+            "Jesus Christ"
+            "Eliel Saarinen"
+
+        Different names for the same people, how to disambiguate?
+            "Vladimir Ilʹich Lenin (1870-1924)"     # duplicative of "Lenin"?
+            "Leslie H. Butcher"                     # vs just "Leslie Butcher"?
+
+        Incorrect birth or death dates?
+
+        Initials instead of names?
+            "G. Baumgartner (1924-)"
+
+        Names that are not names?
+            "House of Habsburg"
+            "Paris family"
+
+        Questionable dates, probably hard to search for:
+            "Thomas Aquinas, Saint (1225?-1274)"
+
+        25 instances of dicts not strings:
+            [{'type': '/type/text', 'value': 'John Bunyan (1628-1688)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Joseph Addison (1672-1719)'},
+             {'type': '/type/text', 'value': 'John Milton (1608-1674)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'John Dryden (1631-1700)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'William Cecil Burghley Baron (1520-1598)'},
+             {'type': '/type/text', 'value': 'Robert Clive Clive Baron (1725-1774)'},
+             {'type': '/type/text', 'value': 'John Hampden (1594-1643)'},
+             {'type': '/type/text', 'value': 'Horace Walpole (1717-1797)'},
+             {'type': '/type/text', 'value': 'William Pitt (1759-1806)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'Joseph Addison (1672-1719)'},
+             {'type': '/type/text', 'value': 'John Bunyan (1628-1688)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Francis Atterbury (1662-1732)'},
+             {'type': '/type/text', 'value': 'Samuel Johnson (1709-1784)'},
+             {'type': '/type/text', 'value': 'William Pitt (1759-1806)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1728-1774)'},
+             {'type': '/type/text', 'value': 'Oliver Goldsmith (1730?-1774)'},
+             {'type': '/type/text', 'value': 'Fanny Burney (1752-1840)'},
+             {'type': '/type/text', 'value': 'Frederick II King of Prussia (1712-1786)'},
+             {'type': '/type/text', 'value': 'William Pitt Earl of Chatham (1708-1778)'}]
+
+    Places:
+
+
+    Times:
+        No end time, can become ambiguous
+            "1945-"
+
+        Descriptions in times:
+            "Civil War, 1861-1865"
+            "To 1763 (New France)"
+            (recommend: Removing descriptions and placing them in a their own tag)
+
+        Approximate times:
+            "Primitive and early church, ca. 30-600"
+
+        Non-standard:
+            "To 1800"                       # should be "-1800" ?
+            "15th century"                  # should be 1400-1499?
+            "sixteenth century"             # should be 1500-1599
+            "From the 1970s into 1990s."    # Should be 1970-1999
+            "1854-60 / Victorian Era / 19th Century"    # 1854-1860, remove "Victorian Era" and "19th Century"
+
+        Non-english:
+            "21e siècle"    # French for 21st Century, will probably not match english searches
+
+        No actual dates:
+            "Quaternary"
+            "Cretaceous"                    # Should be "Cretaceous Period" ??
+            "War of 1812"                   # Should be the years of the war
+            "A autobiography of a paranormal life till the age of 43."
+
+        How to match with an ASCII search?
+            "Chosŏn dynasty, 1392-1910"
+
+        How to specify a time that ends in BC? "-300--200" ?
+            "1100 BCE"
+            "281-146 B.C."
+            "Greco Roman period, 332 B.C.-640 A.D."
+
+    Can we infer tags from the text? Or from the wikipedia page for a work?
+
+    If tags overlap, can we detect and remove synonyms?
+
+    Eliminate leading/trailing spaces:
+        ' Canada',
+        ' Québec (Province)'
+
+    Use consistent naming:
+        all lowercase
+        all singular no plural
+        all english (?? and translate to other languages as needed ??  in realtime??)
+
+    Keep track of both "as-entered tags" and "sanitized tags"
+        Prefer sanitized tags when searching
+        Provide an explanation/audit trail of how a tag was sanitized, and what rule(s) were used and when
+
+    Version sanitization rules (use Semantic Versioning, with a path from that to timestamp . git hash and what was changed)
+        When sanitization rules change, re-run
+
+    All english?
+        "literatura" -> "literature'joodse literatuur':"
+        "joodse literatuur" -> "jewish" and "literature"    # this is dutch
+
+    Avoid overlapping tags? (ie no "Fantasy/Sci-Fi", just use "Fantasy" (and use Solr synonyms?)
+
+    Avoid compound tags, break them down into multiple tags
+        "Islam -- Relations -- Christianity" -> "Islam" and "Relations" and "Christianity"
+        (somehow remove "Relations"? doesnt seem to add much here)
+
+    What to do with "roach (fish)"?
+        Decompose into "roach" and "fish" ?
+
+    Use dash, not underscore
+
+    no punctuation characters - remove commas
+
+    whitespace is ok (ie "series:harry potter")
+        But avoid leading / trailing whitespace
+
+    Use singular case, not plural (Solr can then adjust when searching)
+        "single mothers" -> "single mother"
+
+    Use colon as a separator character (general : specific | more-specific)
+        But sometimes specificity is unclear!
+            "chinese dramatists" could reasonably be either "dramatists:chinese" or "chinese:dramatists"
+            In this case, split into two tags, "chinese" and "dramatists"
+
+    If there will only ever be one book with this tag, it should not be a tag?
+        ie dont tag "isbn:234234234"
+
+    Define synonyms in Solr:
+        cp == "chinese poetry" ?
+        mine parentheses for synonyms
+        find clusters of tags
+
+    Suggest tags, based on content or summary analysis, or wikipedia metadata analysis, or other books by the author(s)
+    Which books or authors have similar tags?
+    Should we tag authors as well?
+
+    Make them all lowercase?
+    Remove ANSI escape codes from tags
+
+    Create a slack bot to:
+        /tag chinese
+            will give you a book to tag that has an existing tag with the "chinese"
+
+    Accept free-form input for tags, but then validate it and present it for approval to the librarian?
+
+    Keep track of who has sanitized tags
+    Keep track of deleted / modified tags?  So we can keep a "tagging history", revert back to previous tags, track tag migration over time?
+
+
+TAXONOMY:
+    language:
+    language-original:
+    translated-from:
+
+    person:         -> maps from subject_people
+    place:          -> maps from subject_places
+    time:           -> maps from subject_times
+
+    award:              Hugo:Fiction:Fiction:1980 or New York Times
+    series:             "harry potter" or "standalone"
+    edition:
+    genre:              find
