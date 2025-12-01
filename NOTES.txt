@@ -44,7 +44,24 @@ NOTES:
             "Vladimir Ilʹich Lenin (1870-1924)"     # duplicative of "Lenin"?
             "Leslie H. Butcher"                     # vs just "Leslie Butcher"?
 
-        Incorrect birth or death dates?
+        Incorrect birth or death dates? All these are presumably the same person, wikipedia says 1728-1774:
+            "Goldsmith, Oliver, 1728-1774"                  # correct
+            "Goldsmith, Oliver, 1728-1774."                 # period at the end
+            "Goldsmith, Oliver, 1730?-1774"                 # incorrect birth date
+            "Goldsmith, oliver, 1730?-1774"                 # incorrect birth date and capitalization
+            "OLIVER GOLDSMITH"                              # ALL CAPS EEK
+            "Oliver B. Goldsmith"                           # Contains middle initial
+            "Oliver Goldsmith"                              # Does NOT contain middle initial
+            "Oliver Goldsmith (1728-1774)"                  # Dates in parenthesis
+            "Oliver Goldsmith (1730-1774)"                  # Incorrect dates in parenthesis
+            "Oliver Goldsmith (1730?-1774)"                 # Incorrect dates in parenthesis
+            "Oliver Goldsmith (1730?-1774,)"                # Trailing comma in dates
+            "Oliver Goldsmith (1794-1861)"                  # Both dates wrong (possible another person)
+            "Oliver, 1728-1744. Animated nature Goldsmith"  # Some sort of mixup
+            "She stoops to conquer (Goldsmith, Oliver)"
+            "Vicar of Wakefield (Goldsmith, Oliver)"
+            "Works (Goldsmith, Oliver)"                     # Not sure how much work "Works" is doing
+            "oliver goldsmith"                              # all lowercase, no dates
 
         Initials instead of names?
             "G. Baumgartner (1924-)"
